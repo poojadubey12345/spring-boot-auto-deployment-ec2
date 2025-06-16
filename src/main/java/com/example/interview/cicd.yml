@@ -1,0 +1,40 @@
+name: CI/CD Spring Boot to EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+            java-version: '17'
+            distribution: 'temurin'
+      - name: Build With Maven
+        run: mvn clean install -DskipTests
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{secrets:DOCKER_USERNAME}} -p ${{secrets:DOCKER_PASSWORD}}
+      - name: Build Docker Image
+        run: docker build -t image project-deplo-ec2
+      - name: Publish Image to Docker Hub
+        run: docker push project-deplo-ec2:latest
+  deploy:
+    needs: build
+    runs-on: [aws-ec2]
+    steps:
+      - name: Pull Image From Docker Hub
+        run: docker pull project-deplo-ec2:latest
+      - name: Delete Old Container
+        run: docker rm -f spring-boot-example-container
+      - name: Run Docker Container
+        run: docker run -d -p 8081:8081 --name spring-boot-example-container project-deplo-ec2
+
+
