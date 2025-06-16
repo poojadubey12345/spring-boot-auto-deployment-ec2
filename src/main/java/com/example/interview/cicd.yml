@@ -23,18 +23,18 @@ jobs:
       - name: Login to Docker Hub
         run: docker login -u ${{secrets:DOCKER_USERNAME}} -p ${{secrets:DOCKER_PASSWORD}}
       - name: Build Docker Image
-        run: docker build -t image project-deplo-ec2
+        run: docker build -t springboot-app .
       - name: Publish Image to Docker Hub
-        run: docker push project-deplo-ec2:latest
+        run: docker push springboot-app:latest
   deploy:
     needs: build
     runs-on: [aws-ec2]
     steps:
       - name: Pull Image From Docker Hub
-        run: docker pull project-deplo-ec2:latest
+        run: docker pull springboot-app:latest
       - name: Delete Old Container
         run: docker rm -f spring-boot-example-container
       - name: Run Docker Container
-        run: docker run -d -p 8081:8081 --name spring-boot-example-container project-deplo-ec2
+        run: docker run -d -p 8081:8081 --name springboot-app-container springboot-app
 
 
